@@ -1,8 +1,8 @@
+import { Suspense } from 'react'
 import { getSettings } from '@/lib/actions/booking'
 import BookingFlow from '@/components/booking/BookingFlow'
+import MyBookings from '@/components/booking/MyBookings'
 import { Sun } from 'lucide-react'
-
-export const revalidate = 60
 
 export default async function HomePage() {
   const settings = await getSettings()
@@ -23,6 +23,10 @@ export default async function HomePage() {
       {/* Main */}
       <main className="flex-1 px-4 py-6">
         <div className="max-w-md mx-auto">
+          <Suspense fallback={null}>
+            <MyBookings />
+          </Suspense>
+
           <div className="mb-6">
             <h2 className="text-xl font-bold text-foreground">相談予約</h2>
             <p className="text-sm text-muted-foreground mt-1">

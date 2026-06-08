@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import type { BookingFormData, BookingStatus } from '@/lib/types'
+import { appendBookingIdToCookie } from '@/lib/actions/my-bookings'
 
 export async function getSettings() {
   const supabase = await createClient()
@@ -69,11 +70,17 @@ export async function createBooking(
     return { error: 'この時間帯はすでに予約済みです。別の時間をお選びください。' }
   }
 
-  const { error } = await supabase.from('bookings').insert(data)
-  if (error) {
+  const { data: inserted, error } = await supabase
+    .from('bookings')
+    .insert(data)
+    .select('id')
+    .single()
+
+  if (error || !inserted) {
     return { error: '予約の送信に失敗しました。時間をおいて再度お試しください。' }
   }
 
+  await appendBookingIdToCookie(inserted.id)
   return { success: true }
 }
 

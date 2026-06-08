@@ -42,6 +42,14 @@ export interface Booking {
   created_at: string
 }
 
+export interface MyBooking {
+  id: string
+  slot_date: string
+  slot_time: string
+  user_name: string
+  status: BookingStatus
+}
+
 export interface BookingFormData {
   slot_date: string
   slot_time: string
