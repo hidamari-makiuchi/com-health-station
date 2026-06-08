@@ -1,36 +1,119 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# みんなの保健室ひだまり - 相談予約アプリ
 
-## Getting Started
+会社の保健室サービス「みんなの保健室ひだまり」の相談予約システムです。
 
-First, run the development server:
+## 技術スタック
+
+- [Next.js 16](https://nextjs.org) (App Router)
+- [Supabase](https://supabase.com) (PostgreSQL + Auth)
+- [Tailwind CSS v4](https://tailwindcss.com) + [shadcn/ui](https://ui.shadcn.com)
+- TypeScript
+
+---
+
+## セットアップ
+
+### 1. 依存パッケージのインストール
+
+```bash
+npm install
+```
+
+### 2. Supabase プロジェクトの作成とリンク
+
+```bash
+# Supabase にログイン（初回のみ）
+supabase login
+
+# リモートプロジェクトにリンク（project-ref は Supabase ダッシュボードの URL から確認）
+supabase link --project-ref <your-project-ref>
+```
+
+### 3. マイグレーションの適用
+
+```bash
+# リモートDBにマイグレーションを適用
+supabase db push
+```
+
+これで以下のテーブルと RLS ポリシーが作成されます：
+- `system_settings` — 予約設定（受付最短日数・スロットモード）
+- `available_slots` — カスタムモード用の個別スロット
+- `bookings` — 予約データ
+
+### 4. 管理者ユーザーの作成
+
+Supabase ダッシュボード > Authentication > Users > **Add user** でメールアドレスとパスワードを登録してください。
+
+### 5. 環境変数の設定
+
+```bash
+cp .env.local.example .env.local
+```
+
+`.env.local` を開き、Supabase ダッシュボード > Settings > API の値を記入します：
+
+```
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+```
+
+### 6. 開発サーバーの起動
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+[http://localhost:3000](http://localhost:3000) で予約フォームが開きます。  
+[http://localhost:3000/admin](http://localhost:3000/admin) が管理画面です。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## ローカル開発（Supabase ローカル環境）
 
-## Learn More
+本番 Supabase を使わずにローカルでテストする場合：
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+# ローカル Supabase を起動（Docker が必要）
+supabase start
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# 表示された API URL と anon key を .env.local に設定
+# NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321
+# NEXT_PUBLIC_SUPABASE_ANON_KEY=<local-anon-key>
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# マイグレーションを適用
+supabase db reset
+```
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Vercel へのデプロイ
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+vercel deploy
+```
+
+Vercel ダッシュボード > Environment Variables に以下を設定してください：
+
+| 変数名 | 値 |
+|--------|-----|
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase の Project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase の anon key |
+
+---
+
+## Supabase CLI よく使うコマンド
+
+```bash
+# マイグレーションの状態確認
+supabase migration list
+
+# 新しいマイグレーションファイルを作成
+supabase migration new <name>
+
+# ローカルDBとリモートの差分確認
+supabase db diff
+
+# リモートDBにマイグレーションを適用
+supabase db push
+```

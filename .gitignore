@@ -30,11 +30,15 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files (実際の値を含むファイルは除外、テンプレートは管理対象)
 .env*
+!.env*.example
 
 # vercel
 .vercel
+
+# supabase local
+.supabase
 
 # typescript
 *.tsbuildinfo
