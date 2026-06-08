@@ -69,13 +69,19 @@ async function getAccessToken(): Promise<string | null> {
 
 async function sendMessage(text: string): Promise<void> {
   const botId = process.env.LINEWORKS_BOT_ID
+  const userId = process.env.LINEWORKS_USER_ID
   const channelId = process.env.LINEWORKS_CHANNEL_ID
-  if (!botId || !channelId) return
+  if (!botId || (!userId && !channelId)) return
 
   const token = await getAccessToken()
   if (!token) return
 
-  await fetch(`https://www.worksapis.com/v1.0/bots/${botId}/channels/${channelId}/messages`, {
+  // ユーザーDM優先、未設定ならチャンネルへ
+  const url = userId
+    ? `https://www.worksapis.com/v1.0/bots/${botId}/users/${userId}/messages`
+    : `https://www.worksapis.com/v1.0/bots/${botId}/channels/${channelId}/messages`
+
+  await fetch(url, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
