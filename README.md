@@ -89,16 +89,24 @@ supabase db reset
 
 ## Vercel へのデプロイ
 
-```bash
-vercel deploy
-```
+このリポジトリは Vercel と GitHub 連携しており、**`main` ブランチへのプッシュで自動的にデプロイされます。**
 
-Vercel ダッシュボード > Environment Variables に以下を設定してください：
+### 初回セットアップ（Vercel 側の設定）
+
+Vercel ダッシュボード > プロジェクト > Settings > Environment Variables に以下を設定してください：
 
 | 変数名 | 値 |
 |--------|-----|
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase の Project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase の anon key |
+
+### デプロイフロー
+
+```
+git push origin main
+       ↓
+Vercel が自動検知してビルド・デプロイ
+```
 
 ---
 
