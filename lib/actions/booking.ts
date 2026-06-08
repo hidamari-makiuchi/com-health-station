@@ -5,6 +5,7 @@ import { createAdminClient } from '@/lib/supabase/server-admin'
 import { revalidatePath } from 'next/cache'
 import type { BookingFormData, BookingStatus } from '@/lib/types'
 import { appendBookingIdToCookie } from '@/lib/actions/my-bookings'
+import { notifyBookingCreated, notifyStatusChanged } from '@/lib/lineworks'
 
 export async function getSettings() {
   const supabase = await createClient()
@@ -83,6 +84,7 @@ export async function createBooking(
   }
 
   await appendBookingIdToCookie(id)
+  await notifyBookingCreated({ slot_date: data.slot_date, slot_time: data.slot_time, user_name: data.user_name })
   return { success: true }
 }
 
@@ -91,6 +93,13 @@ export async function updateBookingStatus(
   status: BookingStatus
 ): Promise<{ success: true } | { error: string }> {
   const supabase = await createClient()
+
+  const { data: booking } = await supabase
+    .from('bookings')
+    .select('slot_date, slot_time, user_name')
+    .eq('id', id)
+    .single()
+
   const { error } = await supabase
     .from('bookings')
     .update({ status })
@@ -99,6 +108,9 @@ export async function updateBookingStatus(
   if (error) return { error: 'ステータスの更新に失敗しました' }
 
   revalidatePath('/admin/bookings')
+  if (booking) {
+    await notifyStatusChanged({ ...booking, status })
+  }
   return { success: true }
 }
 

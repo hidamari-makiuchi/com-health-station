@@ -4,6 +4,7 @@ import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import { createAdminClient } from '@/lib/supabase/server-admin'
 import type { MyBooking } from '@/lib/types'
+import { notifyBookingCancelledByUser } from '@/lib/lineworks'
 
 const BOOKING_IDS_COOKIE = 'booking_ids'
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 90 // 90日
@@ -58,6 +59,13 @@ export async function cancelMyBooking(
   }
 
   const supabase = createAdminClient()
+
+  const { data: booking } = await supabase
+    .from('bookings')
+    .select('slot_date, slot_time, user_name')
+    .eq('id', id)
+    .single()
+
   const { data, error } = await supabase
     .from('bookings')
     .update({ status: 'cancelled' })
@@ -71,5 +79,8 @@ export async function cancelMyBooking(
 
   revalidatePath('/')
   revalidatePath('/admin/bookings')
+  if (booking) {
+    await notifyBookingCancelledByUser(booking)
+  }
   return { success: true }
 }
