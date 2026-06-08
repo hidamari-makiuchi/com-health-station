@@ -67,6 +67,8 @@ async function getAccessToken(): Promise<string | null> {
   return json.access_token ?? null
 }
 
+const ADMIN_BOOKINGS_URL = 'https://com-health-station.vercel.app/admin/bookings'
+
 async function sendMessage(text: string): Promise<void> {
   const botId = process.env.LINEWORKS_BOT_ID
   const userId = process.env.LINEWORKS_USER_ID
@@ -77,17 +79,29 @@ async function sendMessage(text: string): Promise<void> {
   if (!token) return
 
   // ユーザーDM優先、未設定ならチャンネルへ
-  const url = userId
+  const endpoint = userId
     ? `https://www.worksapis.com/v1.0/bots/${botId}/users/${userId}/messages`
     : `https://www.worksapis.com/v1.0/bots/${botId}/channels/${channelId}/messages`
 
-  await fetch(url, {
+  const content = {
+    type: 'button_template',
+    contentText: text,
+    actions: [
+      {
+        type: 'uri',
+        label: '予約一覧を開く',
+        uri: ADMIN_BOOKINGS_URL,
+      },
+    ],
+  }
+
+  await fetch(endpoint, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ content: { type: 'text', text } }),
+    body: JSON.stringify({ content }),
   })
 }
 
