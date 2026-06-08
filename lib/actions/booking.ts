@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server-admin'
 import { revalidatePath } from 'next/cache'
 import type { BookingFormData, BookingStatus } from '@/lib/types'
 import { appendBookingIdToCookie } from '@/lib/actions/my-bookings'
@@ -19,10 +20,12 @@ export async function getAvailableTimesForDate(
   excludeBookingId?: string
 ): Promise<string[]> {
   const supabase = await createClient()
+  // bookingsのSELECTはRLSで匿名不可のため管理者クライアントを使用
+  const adminSupabase = createAdminClient()
 
   const [settingsResult, bookedResult] = await Promise.all([
     supabase.from('system_settings').select('slot_mode, fixed_times').single(),
-    supabase
+    adminSupabase
       .from('bookings')
       .select('slot_time, id')
       .eq('slot_date', date)
@@ -57,8 +60,10 @@ export async function createBooking(
   data: BookingFormData
 ): Promise<{ success: true } | { error: string }> {
   const supabase = await createClient()
+  const adminSupabase = createAdminClient()
 
-  const { data: existing } = await supabase
+  // 重複チェック（RLS回避のため管理者クライアントで確認）
+  const { data: existing } = await adminSupabase
     .from('bookings')
     .select('id')
     .eq('slot_date', data.slot_date)
@@ -70,17 +75,14 @@ export async function createBooking(
     return { error: 'この時間帯はすでに予約済みです。別の時間をお選びください。' }
   }
 
-  const { data: inserted, error } = await supabase
-    .from('bookings')
-    .insert(data)
-    .select('id')
-    .single()
-
-  if (error || !inserted) {
+  // UUID生成 → INSERT（RLS: anon→INSERTのみ許可のためSELECTは使わない）
+  const id = crypto.randomUUID()
+  const { error } = await supabase.from('bookings').insert({ ...data, id })
+  if (error) {
     return { error: '予約の送信に失敗しました。時間をおいて再度お試しください。' }
   }
 
-  await appendBookingIdToCookie(inserted.id)
+  await appendBookingIdToCookie(id)
   return { success: true }
 }
 
@@ -107,7 +109,6 @@ export async function updateBookingDateTime(
 ): Promise<{ success: true } | { error: string }> {
   const supabase = await createClient()
 
-  // 仮予約のみ変更可
   const { data: booking } = await supabase
     .from('bookings')
     .select('status')
@@ -118,7 +119,6 @@ export async function updateBookingDateTime(
     return { error: '仮予約のみ日時を変更できます' }
   }
 
-  // 重複チェック（自分自身を除く）
   const { data: conflict } = await supabase
     .from('bookings')
     .select('id')
