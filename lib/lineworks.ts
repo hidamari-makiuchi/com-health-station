@@ -39,6 +39,12 @@ async function createJwt(clientId: string, serviceAccount: string, privateKeyPem
   return `${signingInput}.${b64url(new Uint8Array(sig))}`
 }
 
+function fetchWithTimeout(url: string, options: RequestInit, ms = 8000): Promise<Response> {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), ms)
+  return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(timer))
+}
+
 async function getAccessToken(): Promise<string | null> {
   const clientId = process.env.LINEWORKS_CLIENT_ID
   const clientSecret = process.env.LINEWORKS_CLIENT_SECRET
@@ -57,7 +63,7 @@ async function getAccessToken(): Promise<string | null> {
     scope: 'bot',
   })
 
-  const res = await fetch('https://auth.worksmobile.com/oauth2/v2.0/token', {
+  const res = await fetchWithTimeout('https://auth.worksmobile.com/oauth2/v2.0/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: body.toString(),
@@ -95,7 +101,7 @@ async function sendMessage(text: string): Promise<void> {
     ],
   }
 
-  await fetch(endpoint, {
+  await fetchWithTimeout(endpoint, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
