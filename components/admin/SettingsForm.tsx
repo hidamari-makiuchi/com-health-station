@@ -15,12 +15,18 @@ interface Props {
   settings: SystemSettings
 }
 
+const DAY_LABELS = ['日', '月', '火', '水', '木', '金', '土']
+
 export default function SettingsForm({ settings }: Props) {
   const [isPending, startTransition] = useTransition()
   const [advanceDays, setAdvanceDays] = useState(settings.advance_days)
   const [slotMode, setSlotMode] = useState<SlotMode>(settings.slot_mode)
   const [fixedTimes, setFixedTimes] = useState<string[]>(settings.fixed_times)
   const [fixedDays, setFixedDays] = useState<number[]>(settings.fixed_days ?? [1, 2, 3, 4, 5])
+  const [weeklyTimes, setWeeklyTimes] = useState<Record<string, string[]>>(
+    settings.weekly_times ?? {}
+  )
+  const [newWeeklyTime, setNewWeeklyTime] = useState<string[]>(['', '', '', '', '', '', ''])
   const [newTime, setNewTime] = useState('')
 
   const toggleDay = (day: number) => {
@@ -39,6 +45,21 @@ export default function SettingsForm({ settings }: Props) {
     setFixedTimes((prev) => prev.filter((x) => x !== t))
   }
 
+  const addWeeklyTime = (dow: number) => {
+    const t = newWeeklyTime[dow]
+    if (!t) return
+    const key = String(dow)
+    const existing = weeklyTimes[key] ?? []
+    if (existing.includes(t)) return
+    setWeeklyTimes((prev) => ({ ...prev, [key]: [...existing, t].sort() }))
+    setNewWeeklyTime((prev) => prev.map((v, i) => (i === dow ? '' : v)))
+  }
+
+  const removeWeeklyTime = (dow: number, t: string) => {
+    const key = String(dow)
+    setWeeklyTimes((prev) => ({ ...prev, [key]: (prev[key] ?? []).filter((x) => x !== t) }))
+  }
+
   const handleSave = () => {
     startTransition(async () => {
       const result = await updateSettings({
@@ -46,6 +67,7 @@ export default function SettingsForm({ settings }: Props) {
         slot_mode: slotMode,
         fixed_times: fixedTimes,
         fixed_days: fixedDays,
+        weekly_times: weeklyTimes,
       })
       if ('error' in result) {
         toast.error(result.error)
@@ -92,7 +114,12 @@ export default function SettingsForm({ settings }: Props) {
             {
               mode: 'fixed' as SlotMode,
               title: '固定時間帯モード',
-              desc: '毎日同じ時間帯を設定します（例: 10:00, 14:00 を毎日）',
+              desc: '選択した曜日すべてに共通の時間帯を設定します',
+            },
+            {
+              mode: 'weekly' as SlotMode,
+              title: '週次テンプレートモード',
+              desc: '曜日ごとに異なる時間帯を設定します（例: 月曜は10:00/14:00、水曜は09:00）',
             },
             {
               mode: 'custom' as SlotMode,
@@ -129,6 +156,77 @@ export default function SettingsForm({ settings }: Props) {
           ))}
         </div>
       </div>
+
+      {/* Weekly template (only when weekly mode) */}
+      {slotMode === 'weekly' && (
+        <div className="bg-card border border-border rounded-xl p-4 space-y-4">
+          <div>
+            <p className="font-semibold text-sm mb-1">曜日ごとの時間帯</p>
+            <p className="text-xs text-muted-foreground mb-3">
+              時間帯が設定されていない曜日は予約フォームに表示されません
+            </p>
+          </div>
+          {DAY_LABELS.map((label, dow) => {
+            const times = weeklyTimes[String(dow)] ?? []
+            return (
+              <div key={dow} className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span
+                    className={cn(
+                      'text-sm font-semibold w-6',
+                      dow === 0 && 'text-red-500',
+                      dow === 6 && 'text-blue-600'
+                    )}
+                  >
+                    {label}
+                  </span>
+                  <div className="flex gap-1.5 flex-wrap flex-1 mx-3 min-h-[28px]">
+                    {times.length === 0 ? (
+                      <span className="text-xs text-muted-foreground self-center">（なし）</span>
+                    ) : (
+                      times.map((t) => (
+                        <span
+                          key={t}
+                          className="inline-flex items-center gap-1 bg-secondary rounded-md px-2 py-0.5 text-xs font-medium"
+                        >
+                          {t}
+                          <button
+                            type="button"
+                            onClick={() => removeWeeklyTime(dow, t)}
+                            className="text-muted-foreground hover:text-destructive transition-colors"
+                            aria-label="削除"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </span>
+                      ))
+                    )}
+                  </div>
+                  <div className="flex gap-1.5 shrink-0">
+                    <Input
+                      type="time"
+                      value={newWeeklyTime[dow]}
+                      onChange={(e) =>
+                        setNewWeeklyTime((prev) => prev.map((v, i) => (i === dow ? e.target.value : v)))
+                      }
+                      className="h-8 w-28 text-sm"
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => addWeeklyTime(dow)}
+                      disabled={!newWeeklyTime[dow]}
+                      className="h-8 px-2"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
 
       {/* Fixed days + times (only when fixed mode) */}
       {slotMode === 'fixed' && (

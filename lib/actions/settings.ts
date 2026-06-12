@@ -9,6 +9,7 @@ export async function updateSettings(settings: {
   slot_mode: SlotMode
   fixed_times: string[]
   fixed_days: number[]
+  weekly_times: Record<string, string[]>
 }): Promise<{ success: true } | { error: string }> {
   const supabase = await createClient()
 

@@ -39,10 +39,19 @@ export async function getAvailableTimesForDate(
       .map((b) => b.slot_time.substring(0, 5))
   )
 
-  if (settingsResult.data?.slot_mode === 'fixed') {
+  const mode = settingsResult.data?.slot_mode
+
+  if (mode === 'fixed') {
     return (settingsResult.data.fixed_times || [])
       .filter((t: string) => !bookedTimes.has(t))
       .sort()
+  }
+
+  if (mode === 'weekly') {
+    const [y, m, d] = date.split('-').map(Number)
+    const dow = new Date(y, m - 1, d).getDay()
+    const times: string[] = (settingsResult.data?.weekly_times ?? {})[String(dow)] ?? []
+    return times.filter((t) => !bookedTimes.has(t)).sort()
   }
 
   const { data: slots } = await supabase

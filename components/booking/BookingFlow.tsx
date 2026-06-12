@@ -19,15 +19,23 @@ function generateSelectableDates(
   advanceDays: number,
   slotMode: string,
   fixedDays: number[],
+  weeklyTimes: Record<string, string[]>,
   maxDates = 30
 ): string[] {
   const dates: string[] = []
   let offset = 0
   while (dates.length < maxDates && offset < 180) {
     const d = addDays(new Date(), advanceDays + offset)
-    if (slotMode !== 'fixed' || fixedDays.length === 0 || fixedDays.includes(d.getDay())) {
-      dates.push(format(d))
+    const dow = d.getDay()
+    let include: boolean
+    if (slotMode === 'fixed') {
+      include = fixedDays.length === 0 || fixedDays.includes(dow)
+    } else if (slotMode === 'weekly') {
+      include = (weeklyTimes[String(dow)]?.length ?? 0) > 0
+    } else {
+      include = true
     }
+    if (include) dates.push(format(d))
     offset++
   }
   return dates
@@ -42,7 +50,8 @@ export default function BookingFlow({ settings }: Props) {
   const selectableDates = generateSelectableDates(
     settings.advance_days,
     settings.slot_mode,
-    settings.fixed_days ?? [0, 1, 2, 3, 4, 5, 6]
+    settings.fixed_days ?? [0, 1, 2, 3, 4, 5, 6],
+    settings.weekly_times ?? {}
   )
 
   const [selectedDate, setSelectedDate] = useState<string | null>(null)

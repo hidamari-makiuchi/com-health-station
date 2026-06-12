@@ -1,4 +1,4 @@
-export type SlotMode = 'fixed' | 'custom'
+export type SlotMode = 'fixed' | 'weekly' | 'custom'
 export type ContactType = 'phone' | 'email'
 export type BookingStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'no_show'
 
@@ -19,6 +19,7 @@ export interface SystemSettings {
   slot_mode: SlotMode
   fixed_times: string[]
   fixed_days: number[]   // 0=日, 1=月, ..., 6=土
+  weekly_times: Record<string, string[]>  // "0"〜"6" → 時刻配列
   updated_at: string
 }
 
