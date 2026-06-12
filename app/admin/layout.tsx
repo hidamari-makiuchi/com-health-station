@@ -17,9 +17,16 @@ export default async function AdminLayout({
     return <>{children}</>
   }
 
+  const { data: settings } = await supabase
+    .from('system_settings')
+    .select('slot_mode')
+    .single()
+
   const navItems = [
     { href: '/admin/bookings', label: '予約一覧', icon: CalendarDays },
-    { href: '/admin/slots',    label: 'スロット管理', icon: Clock },
+    ...(settings?.slot_mode === 'custom'
+      ? [{ href: '/admin/slots', label: 'スロット管理', icon: Clock }]
+      : []),
     { href: '/admin/settings', label: '設定', icon: Settings },
   ]
 
