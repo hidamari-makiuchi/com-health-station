@@ -5,9 +5,10 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import BookingDetailModal from './BookingDetailModal'
+import AdminBookingModal from './AdminBookingModal'
 import { BOOKING_STATUS_CONFIG, type Booking, type BookingStatus } from '@/lib/types'
 import { formatJP } from '@/lib/date-utils'
-import { Search, Pencil } from 'lucide-react'
+import { Search, Pencil, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface Props {
@@ -18,6 +19,7 @@ export default function BookingTable({ bookings: initial }: Props) {
   const [bookings, setBookings] = useState(initial)
   const [filter, setFilter] = useState('')
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
+  const [addModalOpen, setAddModalOpen] = useState(false)
 
   const filtered = bookings.filter((b) => {
     const q = filter.toLowerCase()
@@ -40,15 +42,21 @@ export default function BookingTable({ bookings: initial }: Props) {
 
   return (
     <div>
-      {/* 検索 */}
-      <div className="relative mb-4">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input
-          placeholder="名前・連絡先・日付・状態で検索"
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          className="pl-9 h-10"
-        />
+      {/* 検索・追加 */}
+      <div className="flex gap-2 mb-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="名前・連絡先・日付・状態で検索"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            className="pl-9 h-10"
+          />
+        </div>
+        <Button size="sm" className="h-10 gap-1.5 shrink-0" onClick={() => setAddModalOpen(true)}>
+          <Plus className="w-4 h-4" />
+          電話受付
+        </Button>
       </div>
 
       {filtered.length === 0 ? (
@@ -161,6 +169,12 @@ export default function BookingTable({ bookings: initial }: Props) {
         onUpdate={(updates) => {
           if (selectedBooking) handleUpdate(selectedBooking.id, updates)
         }}
+      />
+
+      <AdminBookingModal
+        open={addModalOpen}
+        onClose={() => setAddModalOpen(false)}
+        onCreated={() => window.location.reload()}
       />
     </div>
   )

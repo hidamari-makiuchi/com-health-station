@@ -170,3 +170,35 @@ export async function updateBookingNotes(
   revalidatePath('/admin/bookings')
   return { success: true }
 }
+
+export async function createAdminBooking(
+  data: BookingFormData & { notes?: string }
+): Promise<{ success: true } | { error: string }> {
+  const adminSupabase = createAdminClient()
+
+  const { data: existing } = await adminSupabase
+    .from('bookings')
+    .select('id')
+    .eq('slot_date', data.slot_date)
+    .eq('slot_time', data.slot_time)
+    .neq('status', 'cancelled')
+    .maybeSingle()
+
+  if (existing) {
+    return { error: 'この時間帯はすでに予約済みです。別の時間をお選びください。' }
+  }
+
+  const id = crypto.randomUUID()
+  const { error } = await adminSupabase.from('bookings').insert({
+    id,
+    ...data,
+    status: 'confirmed',
+    notes: data.notes || null,
+  })
+
+  if (error) return { error: '予約の登録に失敗しました。' }
+
+  revalidatePath('/admin/bookings')
+  await notifyBookingCreated({ slot_date: data.slot_date, slot_time: data.slot_time, user_name: data.user_name })
+  return { success: true }
+}
