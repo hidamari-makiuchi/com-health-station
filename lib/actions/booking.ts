@@ -25,7 +25,7 @@ export async function getAvailableTimesForDate(
   const adminSupabase = createAdminClient()
 
   const [settingsResult, bookedResult] = await Promise.all([
-    supabase.from('system_settings').select('slot_mode, fixed_times').single(),
+    supabase.from('system_settings').select('slot_mode, fixed_times, weekly_times').single(),
     adminSupabase
       .from('bookings')
       .select('slot_time, id')
@@ -42,7 +42,7 @@ export async function getAvailableTimesForDate(
   const mode = settingsResult.data?.slot_mode
 
   if (mode === 'fixed') {
-    return (settingsResult.data.fixed_times || [])
+    return (settingsResult.data?.fixed_times || [])
       .filter((t: string) => !bookedTimes.has(t))
       .sort()
   }
