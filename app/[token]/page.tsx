@@ -4,6 +4,7 @@ import { getCompanyByToken } from '@/lib/actions/companies'
 import { getSettings } from '@/lib/actions/booking'
 import BookingFlow from '@/components/booking/BookingFlow'
 import MyBookings from '@/components/booking/MyBookings'
+import FlowModal from '@/components/booking/FlowModal'
 import { Sun } from 'lucide-react'
 
 interface Props {
@@ -34,6 +35,8 @@ export default async function CompanyBookingPage({ params }: Props) {
           <Suspense fallback={null}>
             <MyBookings />
           </Suspense>
+
+          <FlowModal />
 
           <div className="mb-6">
             <h2 className="text-xl font-bold text-foreground">相談予約</h2>
