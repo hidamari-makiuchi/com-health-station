@@ -1,4 +1,12 @@
 export type SlotMode = 'fixed' | 'weekly' | 'custom'
+
+export interface Company {
+  id: string
+  name: string
+  token: string
+  is_active: boolean
+  created_at: string
+}
 export type ContactType = 'phone' | 'email'
 export type BookingStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'no_show'
 
@@ -40,6 +48,7 @@ export interface Booking {
   contact_type: ContactType
   status: BookingStatus
   notes: string | null
+  company_id: string | null
   created_at: string
 }
 

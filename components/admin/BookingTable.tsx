@@ -6,16 +6,18 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import BookingDetailModal from './BookingDetailModal'
 import AdminBookingModal from './AdminBookingModal'
-import { BOOKING_STATUS_CONFIG, type Booking, type BookingStatus } from '@/lib/types'
+import { BOOKING_STATUS_CONFIG, type Booking, type BookingStatus, type Company } from '@/lib/types'
 import { formatJP } from '@/lib/date-utils'
 import { Search, Pencil, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface Props {
   bookings: Booking[]
+  companies: Company[]
 }
 
-export default function BookingTable({ bookings: initial }: Props) {
+export default function BookingTable({ bookings: initial, companies }: Props) {
+  const companyMap = Object.fromEntries(companies.map((c) => [c.id, c.name]))
   const [bookings, setBookings] = useState(initial)
   const [filter, setFilter] = useState('')
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
@@ -73,6 +75,7 @@ export default function BookingTable({ bookings: initial }: Props) {
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">日時</th>
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">お名前</th>
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">連絡先</th>
+                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">会社</th>
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">状態</th>
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">備考</th>
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">受付日</th>
@@ -88,6 +91,9 @@ export default function BookingTable({ bookings: initial }: Props) {
                     <td className="px-4 py-3 font-medium">{b.user_name}</td>
                     <td className="px-4 py-3 text-muted-foreground">
                       {b.contact_type === 'phone' ? '📞' : '📧'} {b.contact}
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground text-xs">
+                      {b.company_id ? (companyMap[b.company_id] ?? '—') : '—'}
                     </td>
                     <td className="px-4 py-3">
                       <StatusBadge status={b.status} />
@@ -147,6 +153,11 @@ export default function BookingTable({ bookings: initial }: Props) {
                 <p className="text-sm text-muted-foreground">
                   {b.contact_type === 'phone' ? '📞' : '📧'} {b.contact}
                 </p>
+                {b.company_id && companyMap[b.company_id] && (
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    🏢 {companyMap[b.company_id]}
+                  </p>
+                )}
                 {b.notes && (
                   <p className="text-xs text-muted-foreground mt-1.5 line-clamp-2 bg-muted/40 rounded-md px-2 py-1">
                     {b.notes}
@@ -175,6 +186,7 @@ export default function BookingTable({ bookings: initial }: Props) {
         open={addModalOpen}
         onClose={() => setAddModalOpen(false)}
         onCreated={() => window.location.reload()}
+        companies={companies}
       />
     </div>
   )

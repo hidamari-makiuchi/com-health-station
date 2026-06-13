@@ -13,6 +13,7 @@ import { addDays, format, parseISO } from '@/lib/date-utils'
 
 interface Props {
   settings: SystemSettings
+  company: { id: string; token: string }
 }
 
 function generateSelectableDates(
@@ -43,7 +44,7 @@ function generateSelectableDates(
 
 const DAY_LABELS = ['日', '月', '火', '水', '木', '金', '土']
 
-export default function BookingFlow({ settings }: Props) {
+export default function BookingFlow({ settings, company }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
@@ -68,7 +69,7 @@ export default function BookingFlow({ settings }: Props) {
     setAvailableTimes([])
     setLoadingTimes(true)
     try {
-      const times = await getAvailableTimesForDate(date)
+      const times = await getAvailableTimesForDate(date, company.id)
       setAvailableTimes(times)
     } finally {
       setLoadingTimes(false)
@@ -80,13 +81,16 @@ export default function BookingFlow({ settings }: Props) {
     if (!selectedDate || !selectedTime || !userName || !contact) return
 
     startTransition(async () => {
-      const result = await createBooking({
-        slot_date: selectedDate,
-        slot_time: selectedTime,
-        user_name: userName,
-        contact,
-        contact_type: contactType,
-      })
+      const result = await createBooking(
+        {
+          slot_date: selectedDate,
+          slot_time: selectedTime,
+          user_name: userName,
+          contact,
+          contact_type: contactType,
+        },
+        company.id
+      )
 
       if ('error' in result) {
         toast.error(result.error)
@@ -94,7 +98,7 @@ export default function BookingFlow({ settings }: Props) {
       }
 
       router.push(
-        `/booking/complete?name=${encodeURIComponent(userName)}&date=${selectedDate}&time=${selectedTime}`
+        `/${company.token}/booking/complete?name=${encodeURIComponent(userName)}&date=${selectedDate}&time=${selectedTime}`
       )
     })
   }

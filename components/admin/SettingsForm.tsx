@@ -62,7 +62,7 @@ export default function SettingsForm({ settings }: Props) {
 
   const handleSave = () => {
     startTransition(async () => {
-      const result = await updateSettings({
+      const result = await updateSettings(settings.id, {
         advance_days: advanceDays,
         slot_mode: slotMode,
         fixed_times: fixedTimes,

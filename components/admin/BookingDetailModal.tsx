@@ -63,7 +63,7 @@ export default function BookingDetailModal({ booking, open, onClose, onUpdate }:
     if (!date || !booking) return
     setLoadingTimes(true)
     try {
-      const times = await getAvailableTimesForDate(date, booking.id)
+      const times = await getAvailableTimesForDate(date, booking.company_id ?? undefined, booking.id)
       setAvailableTimes(times)
     } finally {
       setLoadingTimes(false)

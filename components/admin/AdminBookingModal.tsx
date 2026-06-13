@@ -13,18 +13,20 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { getAvailableTimesForDate, createAdminBooking } from '@/lib/actions/booking'
-import type { ContactType } from '@/lib/types'
+import type { Company, ContactType } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
 interface Props {
   open: boolean
   onClose: () => void
   onCreated: () => void
+  companies: Company[]
 }
 
-export default function AdminBookingModal({ open, onClose, onCreated }: Props) {
+export default function AdminBookingModal({ open, onClose, onCreated, companies }: Props) {
   const [isPending, startTransition] = useTransition()
 
+  const [companyId, setCompanyId] = useState(companies[0]?.id ?? '')
   const [slotDate, setSlotDate] = useState('')
   const [slotTime, setSlotTime] = useState('')
   const [availableTimes, setAvailableTimes] = useState<string[]>([])
@@ -41,14 +43,22 @@ export default function AdminBookingModal({ open, onClose, onCreated }: Props) {
     if (!date) return
     setLoadingTimes(true)
     try {
-      const times = await getAvailableTimesForDate(date)
+      const times = await getAvailableTimesForDate(date, companyId || undefined)
       setAvailableTimes(times)
     } finally {
       setLoadingTimes(false)
     }
   }
 
+  const handleCompanyChange = (id: string) => {
+    setCompanyId(id)
+    setSlotDate('')
+    setSlotTime('')
+    setAvailableTimes([])
+  }
+
   const handleClose = () => {
+    setCompanyId(companies[0]?.id ?? '')
     setSlotDate('')
     setSlotTime('')
     setAvailableTimes([])
@@ -71,6 +81,7 @@ export default function AdminBookingModal({ open, onClose, onCreated }: Props) {
         contact,
         contact_type: contactType,
         notes,
+        company_id: companyId || null,
       })
 
       if ('error' in result) {
@@ -92,6 +103,23 @@ export default function AdminBookingModal({ open, onClose, onCreated }: Props) {
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-5">
+          {/* 会社選択 */}
+          {companies.length > 0 && (
+            <div>
+              <Label className="text-sm font-medium mb-1.5 block">会社</Label>
+              <select
+                value={companyId}
+                onChange={(e) => handleCompanyChange(e.target.value)}
+                className="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm"
+              >
+                <option value="">（会社なし）</option>
+                {companies.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
           {/* 日時 */}
           <div className="grid grid-cols-2 gap-3">
             <div>

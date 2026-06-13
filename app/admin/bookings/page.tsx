@@ -1,15 +1,19 @@
 import { createClient } from '@/lib/supabase/server'
+import { listCompanies } from '@/lib/actions/companies'
 import BookingTable from '@/components/admin/BookingTable'
 
 export const revalidate = 0
 
 export default async function AdminBookingsPage() {
   const supabase = await createClient()
-  const { data: bookings } = await supabase
-    .from('bookings')
-    .select('*')
-    .order('slot_date', { ascending: false })
-    .order('slot_time', { ascending: false })
+  const [bookingsResult, companies] = await Promise.all([
+    supabase
+      .from('bookings')
+      .select('*')
+      .order('slot_date', { ascending: false })
+      .order('slot_time', { ascending: false }),
+    listCompanies(),
+  ])
 
   return (
     <div>
@@ -19,7 +23,7 @@ export default async function AdminBookingsPage() {
           申し込まれた相談予約の一覧です
         </p>
       </div>
-      <BookingTable bookings={bookings || []} />
+      <BookingTable bookings={bookingsResult.data || []} companies={companies} />
     </div>
   )
 }

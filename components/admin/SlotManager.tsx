@@ -12,9 +12,10 @@ import { Trash2, Plus } from 'lucide-react'
 
 interface Props {
   initialSlots: AvailableSlot[]
+  companyId: string
 }
 
-export default function SlotManager({ initialSlots }: Props) {
+export default function SlotManager({ initialSlots, companyId }: Props) {
   const [slots, setSlots] = useState(initialSlots)
   const [date, setDate] = useState('')
   const [time, setTime] = useState('')
@@ -23,7 +24,7 @@ export default function SlotManager({ initialSlots }: Props) {
   const handleAdd = () => {
     if (!date || !time) return
     startTransition(async () => {
-      const result = await addSlot(date, time)
+      const result = await addSlot(date, time, companyId)
       if ('error' in result) {
         toast.error(result.error)
         return

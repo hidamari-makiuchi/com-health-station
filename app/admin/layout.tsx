@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { Sun, CalendarDays, Clock, Settings } from 'lucide-react'
+import { Sun, CalendarDays, Clock, Settings, Building2 } from 'lucide-react'
 import LogoutButton from '@/components/admin/LogoutButton'
 
 export default async function AdminLayout({
@@ -17,17 +17,19 @@ export default async function AdminLayout({
     return <>{children}</>
   }
 
-  const { data: settings } = await supabase
+  const { data: customSettings } = await supabase
     .from('system_settings')
-    .select('slot_mode')
-    .single()
+    .select('id')
+    .eq('slot_mode', 'custom')
+    .limit(1)
+
+  const showSlotsNav = (customSettings?.length ?? 0) > 0
 
   const navItems = [
-    { href: '/admin/bookings', label: '予約一覧', icon: CalendarDays },
-    ...(settings?.slot_mode === 'custom'
-      ? [{ href: '/admin/slots', label: 'スロット管理', icon: Clock }]
-      : []),
-    { href: '/admin/settings', label: '設定', icon: Settings },
+    { href: '/admin/bookings',  label: '予約一覧',   icon: CalendarDays },
+    { href: '/admin/companies', label: '会社管理',   icon: Building2 },
+    ...(showSlotsNav ? [{ href: '/admin/slots', label: 'スロット管理', icon: Clock }] : []),
+    { href: '/admin/settings',  label: '設定',       icon: Settings },
   ]
 
   return (
