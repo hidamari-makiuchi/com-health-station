@@ -7,14 +7,23 @@ import type { BookingFormData, BookingStatus } from '@/lib/types'
 import { appendBookingIdToCookie } from '@/lib/actions/my-bookings'
 import { notifyBookingCreated, notifyStatusChanged } from '@/lib/lineworks'
 
+// 会社設定を取得。会社固有設定があればそれを、なければグローバル（company_id=NULL）にフォールバック
 export async function getSettings(companyId: string) {
   const supabase = await createClient()
-  const { data } = await supabase
+
+  const { data: companySettings } = await supabase
     .from('system_settings')
     .select('*')
     .eq('company_id', companyId)
     .maybeSingle()
-  return data
+  if (companySettings) return companySettings
+
+  const { data: globalSettings } = await supabase
+    .from('system_settings')
+    .select('*')
+    .is('company_id', null)
+    .maybeSingle()
+  return globalSettings
 }
 
 export async function getAvailableTimesForDate(
@@ -25,20 +34,30 @@ export async function getAvailableTimesForDate(
   const supabase = await createClient()
   const adminSupabase = createAdminClient()
 
-  const settingsQuery = supabase
-    .from('system_settings')
-    .select('slot_mode, fixed_times, weekly_times')
+  // 会社設定 → グローバルのフォールバック順で解決
+  let settingsData = null
+  if (companyId) {
+    const { data } = await supabase
+      .from('system_settings')
+      .select('slot_mode, fixed_times, weekly_times, company_id')
+      .eq('company_id', companyId)
+      .maybeSingle()
+    settingsData = data
+  }
+  if (!settingsData) {
+    const { data } = await supabase
+      .from('system_settings')
+      .select('slot_mode, fixed_times, weekly_times, company_id')
+      .is('company_id', null)
+      .maybeSingle()
+    settingsData = data
+  }
 
-  const [settingsResult, bookedResult] = await Promise.all([
-    companyId
-      ? settingsQuery.eq('company_id', companyId).maybeSingle()
-      : settingsQuery.is('company_id', null).maybeSingle(),
-    adminSupabase
-      .from('bookings')
-      .select('slot_time, id')
-      .eq('slot_date', date)
-      .neq('status', 'cancelled'),
-  ])
+  const bookedResult = await adminSupabase
+    .from('bookings')
+    .select('slot_time, id')
+    .eq('slot_date', date)
+    .neq('status', 'cancelled')
 
   const bookedTimes = new Set(
     (bookedResult.data || [])
@@ -46,10 +65,10 @@ export async function getAvailableTimesForDate(
       .map((b) => b.slot_time.substring(0, 5))
   )
 
-  const mode = settingsResult.data?.slot_mode
+  const mode = settingsData?.slot_mode
 
   if (mode === 'fixed') {
-    return (settingsResult.data?.fixed_times || [])
+    return (settingsData?.fixed_times || [])
       .filter((t: string) => !bookedTimes.has(t))
       .sort()
   }
@@ -57,18 +76,20 @@ export async function getAvailableTimesForDate(
   if (mode === 'weekly') {
     const [y, m, d] = date.split('-').map(Number)
     const dow = new Date(y, m - 1, d).getDay()
-    const times: string[] = (settingsResult.data?.weekly_times ?? {})[String(dow)] ?? []
+    const times: string[] = (settingsData?.weekly_times ?? {})[String(dow)] ?? []
     return times.filter((t) => !bookedTimes.has(t)).sort()
   }
 
+  // custom モード: 解決した設定の company_id でスロットを取得（nullならグローバル）
+  const effectiveCompanyId = settingsData?.company_id ?? null
   const slotsQuery = supabase
     .from('available_slots')
     .select('slot_time')
     .eq('slot_date', date)
     .eq('is_active', true)
 
-  const { data: slots } = companyId
-    ? await slotsQuery.eq('company_id', companyId)
+  const { data: slots } = effectiveCompanyId
+    ? await slotsQuery.eq('company_id', effectiveCompanyId)
     : await slotsQuery.is('company_id', null)
 
   return (slots || [])

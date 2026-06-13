@@ -39,16 +39,6 @@ export async function createCompany(
 
   if (error) return { error: '会社の作成に失敗しました' }
 
-  // デフォルト設定を作成
-  await supabase.from('system_settings').insert({
-    company_id: data.id,
-    advance_days: 5,
-    slot_mode: 'fixed',
-    fixed_times: ['10:00', '11:00', '14:00', '15:00'],
-    fixed_days: [1, 2, 3, 4, 5],
-    weekly_times: {},
-  })
-
   revalidatePath('/admin/companies')
   return { success: true, company: data }
 }
