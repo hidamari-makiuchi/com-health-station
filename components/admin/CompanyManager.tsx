@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -7,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { createCompany, regenerateToken, updateCompanyActive } from '@/lib/actions/companies'
 import type { Company } from '@/lib/types'
-import { Plus, RefreshCw, Copy, Check } from 'lucide-react'
+import { Plus, RefreshCw, Copy, Check, Settings } from 'lucide-react'
 
 interface Props {
   initialCompanies: Company[]
@@ -122,15 +123,22 @@ export default function CompanyManager({ initialCompanies }: Props) {
                       {company.is_active ? '有効' : '無効'}
                     </p>
                   </div>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => handleToggleActive(company.id, company.is_active)}
-                    disabled={isPending}
-                    className="text-xs h-7"
-                  >
-                    {company.is_active ? '無効化' : '有効化'}
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Link href={`/admin/settings?company=${company.id}`}>
+                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0" aria-label="設定">
+                        <Settings className="w-3.5 h-3.5" />
+                      </Button>
+                    </Link>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleToggleActive(company.id, company.is_active)}
+                      disabled={isPending}
+                      className="text-xs h-7 px-2"
+                    >
+                      {company.is_active ? '無効化' : '有効化'}
+                    </Button>
+                  </div>
                 </div>
 
                 <div className="bg-muted/40 rounded-lg px-3 py-2 flex items-center justify-between gap-2">

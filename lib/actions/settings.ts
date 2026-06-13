@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server-admin'
 import { revalidatePath } from 'next/cache'
 import type { SlotMode } from '@/lib/types'
 
@@ -31,15 +32,15 @@ export async function updateSettings(
 export async function createCompanySettings(
   companyId: string
 ): Promise<{ success: true } | { error: string }> {
-  const supabase = await createClient()
+  const adminSupabase = createAdminClient()
 
-  const { data: global } = await supabase
+  const { data: global } = await adminSupabase
     .from('system_settings')
     .select('*')
     .is('company_id', null)
     .maybeSingle()
 
-  const { error } = await supabase.from('system_settings').insert({
+  const { error } = await adminSupabase.from('system_settings').insert({
     company_id: companyId,
     advance_days:  global?.advance_days  ?? 5,
     slot_mode:     global?.slot_mode     ?? 'fixed',
@@ -58,9 +59,9 @@ export async function createCompanySettings(
 export async function deleteCompanySettings(
   settingsId: string
 ): Promise<{ success: true } | { error: string }> {
-  const supabase = await createClient()
+  const adminSupabase = createAdminClient()
 
-  const { error } = await supabase
+  const { error } = await adminSupabase
     .from('system_settings')
     .delete()
     .eq('id', settingsId)

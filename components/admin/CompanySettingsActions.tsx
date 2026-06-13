@@ -22,7 +22,7 @@ export function CreateCompanySettingsButton({ companyId }: CreateProps) {
         return
       }
       toast.success('会社別設定を作成しました')
-      router.refresh()
+      router.push(`/admin/settings?company=${companyId}`)
     })
   }
 
@@ -50,7 +50,7 @@ export function DeleteCompanySettingsButton({ settingsId }: DeleteProps) {
         return
       }
       toast.success('グローバル設定に戻しました')
-      router.refresh()
+      router.push('/admin/settings')
     })
   }
 
