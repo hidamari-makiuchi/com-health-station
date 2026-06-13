@@ -1,8 +1,10 @@
 import Link from 'next/link'
+import { notFound } from 'next/navigation'
 import { buttonVariants } from '@/components/ui/button'
 import { CheckCircle, Sun } from 'lucide-react'
 import { formatJP } from '@/lib/date-utils'
 import { cn } from '@/lib/utils'
+import { getCompanyByToken } from '@/lib/actions/companies'
 
 interface Props {
   params: Promise<{ token: string }>
@@ -11,6 +13,9 @@ interface Props {
 
 export default async function CompletePage({ params, searchParams }: Props) {
   const { token } = await params
+  const company = await getCompanyByToken(token)
+  if (!company) notFound()
+
   const { name, date, time } = await searchParams
 
   return (
@@ -19,8 +24,8 @@ export default async function CompletePage({ params, searchParams }: Props) {
         <div className="max-w-md mx-auto flex items-center gap-2">
           <Sun className="w-6 h-6" />
           <div>
-            <p className="text-xs opacity-80 leading-none">みんなの保健室</p>
-            <h1 className="text-lg font-bold leading-tight">ひだまり</h1>
+            <p className="text-xs opacity-80 leading-none">みんなの保健室陽だまり</p>
+            <h1 className="text-lg font-bold leading-tight">{company.name}の保健室</h1>
           </div>
         </div>
       </header>

@@ -23,8 +23,8 @@ export default async function CompanyBookingPage({ params }: Props) {
         <div className="max-w-md mx-auto flex items-center gap-2">
           <Sun className="w-6 h-6" />
           <div>
-            <p className="text-xs opacity-80 leading-none">みんなの保健室</p>
-            <h1 className="text-lg font-bold leading-tight">ひだまり</h1>
+            <p className="text-xs opacity-80 leading-none">みんなの保健室陽だまり</p>
+            <h1 className="text-lg font-bold leading-tight">{company.name}の保健室</h1>
           </div>
         </div>
       </header>
