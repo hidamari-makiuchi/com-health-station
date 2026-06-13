@@ -84,9 +84,12 @@ export default function CompanyManager({ initialCompanies }: Props) {
               id="company-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              onCompositionEnd={(e) => setName((e.target as HTMLInputElement).value)}
               placeholder="株式会社サンプル"
               className="h-11"
-              onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.nativeEvent.isComposing) handleCreate()
+              }}
             />
           </div>
           <div className="flex items-end">
