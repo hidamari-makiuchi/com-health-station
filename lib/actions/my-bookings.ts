@@ -44,6 +44,7 @@ export async function getMyBookings(): Promise<MyBooking[]> {
     .select('id, slot_date, slot_time, user_name, status')
     .in('id', ids)
     .neq('status', 'cancelled')
+    .neq('status', 'completed')
     .order('slot_date', { ascending: false })
     .order('slot_time', { ascending: false })
 
